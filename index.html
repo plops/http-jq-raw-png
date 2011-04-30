@@ -1,8 +1,14 @@
 <!doctype html>
 <html>
   <head>
-    <style>a.test{font.weight:bold;}</style>  
+   
     <meta charset="utf-8">
+ <style>
+    canvas{
+	  cursor: crosshair;
+	  border: black solid 2px;
+    }
+    </style>  
     <title>Demo</title>
   </head>
   <body>
@@ -10,6 +16,30 @@
     <script src="jquery-latest.min.js"></script>
     <script>
     $(document).ready(function(){
+	var draw=false,
+	canvas=document.getElementById("can"),
+	ctx=canvas.getContext("2d");
+	ctx.strokeStyle='red';
+	ctx.fillStyle = "rgba(0, 0, 200, 0.5)";
+	ctx.fillRect (30, 30, 55, 50);
+
+	$("#can").mousedown(function(){draw=true;});
+	$("#can").mouseup(function(){draw=false;});
+	$("#can").mousemove(function(e){
+	    if(draw==true){
+	    	ctx.lineWidth=14;
+	    	ctx.lineCap="round";
+	    	ctx.beginPath();
+	    var x=e.offsetX, y=e.offsetY;
+	    	ctx.moveTo(x,y);
+	    	ctx.lineTo(x+1,y+1);
+	    	ctx.stroke();
+	     }
+	});
+	$("#eraser").click(function(){
+	    ctx.strokeStyle='#fff';
+	});
+
 	$("dd:not(:first)").hide();
 	$("dt a").click(function(event){
 	    $("dd:visible").slideUp("slow");
@@ -40,8 +70,9 @@
 	<ul>
 	  <li><a href="1">eins</a></li>
 	  <li><a href="2">zeins</a></li>
-	  <li><a href="3">dreins</a></li>
+	  <li><a id="eraser" href="#">eraser</a></li>
 	</ul>
       </dd>
+    <canvas id="can" width="200" height="200"></canvas>
   </body>
 </html>
