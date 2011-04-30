@@ -1,0 +1,47 @@
+<!doctype html>
+<html>
+  <head>
+    <style>a.test{font.weight:bold;}</style>  
+    <meta charset="utf-8">
+    <title>Demo</title>
+  </head>
+  <body>
+    <a href="http://jquery.com/">jQuery</a>
+    <script src="jquery-latest.min.js"></script>
+    <script>
+    $(document).ready(function(){
+	$("dd:not(:first)").hide();
+	$("dt a").click(function(event){
+	    $("dd:visible").slideUp("slow");
+	    $(this).parent().next().slideDown("slow");
+	    event.preventDefault();
+	});
+    });
+    </script>
+    <dl>
+      <dt><a href="/">blub</a></dt>
+      <dd>
+	<ul>
+	  <li><a href="1">eins</a></li>
+	  <li><a href="2">zeins</a></li>
+	  <li><a href="3">dreins</a></li>
+	</ul>
+      </dd>
+      <dt><a href="/">blub1</a></dt>
+      <dd>
+	<ul>
+	  <li><a href="1">eins</a></li>
+	  <li><a href="2">zeins</a></li>
+	  <li><a href="3">dreins</a></li>
+	</ul>
+      </dd>
+      <dt><a href="/">blub2</a></dt>
+      <dd>
+	<ul>
+	  <li><a href="1">eins</a></li>
+	  <li><a href="2">zeins</a></li>
+	  <li><a href="3">dreins</a></li>
+	</ul>
+      </dd>
+  </body>
+</html>
