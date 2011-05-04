@@ -1,83 +1,18 @@
 <!doctype html>
 <html>
   <head>
-   
     <meta charset="utf-8">
- <style>
-    canvas{
-	  cursor: crosshair;
-	  border: black solid 2px;
-    }
+    <style>
+      canvas{
+      cursor: crosshair;
+      border: black solid 2px;
+      }
     </style>  
     <title>Demo</title>
   </head>
   <body>
-    <a href="http://jquery.com/">jQuery</a>
-    <script src="jquery-latest.min.js"></script>
-    <script>
-    $(document).ready(function(){
-	var draw=false,
-	canvas=document.getElementById("can"),
-	ctx=canvas.getContext("2d");
-	ctx.strokeStyle='red';
-	ctx.fillStyle = "rgba(0, 0, 200, 0.5)";
-	ctx.fillRect (30, 30, 55, 50);
-
-	$("#can").mousedown(function(){draw=true;});
-	$("#can").mouseup(function(){draw=false;});
-	$("#can").mousemove(function(e){
-	    if(draw==true){
-	    	ctx.lineWidth=14;
-	    	ctx.lineCap="round";
-	    	ctx.beginPath();
-	    var x=e.offsetX, y=e.offsetY;
-	    	ctx.moveTo(x,y);
-	    	ctx.lineTo(x+1,y+1);
-	    	ctx.stroke();
-	     }
-	});
-	$("#eraser").click(function(){
-	    ctx.strokeStyle='#fff';
-	});
-
-	$.get('http://localhost:8080/ajax/test.html', function(data) {
-	    $('.result').html(data);
-	    alert('Load was performed.');
-	});
-
-	$("dd:not(:first)").hide();
-	$("dt a").click(function(event){
-	    $("dd:visible").slideUp("slow");
-	    $(this).parent().next().slideDown("slow");
-	    event.preventDefault();
-	});
-    });
-    </script>
-    <dl>
-      <dt><a href="/">blub</a></dt>
-      <dd>
-	<ul>
-	  <li><a href="1">eins</a></li>
-	  <li><a href="2">zeins</a></li>
-	  <li><a href="3">dreins</a></li>
-	</ul>
-      </dd>
-      <dt><a href="/">blub1</a></dt>
-      <dd>
-	<ul>
-	  <li><a href="1">eins</a></li>
-	  <li><a href="2">zeins</a></li>
-	  <li><a href="3">dreins</a></li>
-	</ul>
-      </dd>
-      <dt><a href="/">blub2</a></dt>
-      <dd>
-	<ul>
-	  <li><a href="1">eins</a></li>
-	  <li><a href="2">zeins</a></li>
-	  <li><a id="eraser" href="#">eraser</a></li>
-	</ul>
-      </dd>
+    <script src="jquery.js"></script>
+    <script src="canvas.js"></script>
     <canvas id="can" width="200" height="200"></canvas>
   </body>
 </html>

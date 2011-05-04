@@ -80,37 +80,43 @@ a double quote, etc."
 			   `(setf string (string-substitute string ,a ,b)))))))
     (q)))
 
+(defun read-file (fn)
+ (with-open-file (s fn :direction :input)
+   (let ((buf (make-string (file-length s))))
+     (read-sequence buf s)
+     buf)))
 
-(defun handle-connection (s)
-  (let ((sm (socket-make-stream (socket-accept s)
-				:output t
-				:input t
-				 :element-type 
-				 :default ; bivalent stream for binary and text
+(defun get-answer (str &optional (type "text/html"))
+  (concatenate 'string "HTTP/1.1 200 OK~%Content-type: "
+	       type
+	       "~%~%"
+	       str))
+
+(let* ((index (get-answer (read-file "index.html")))
+       (jquery (get-answer (read-file "jquery.js")
+			    "application/x-javascript")))
+  (defun handle-connection (s)
+    (let ((sm (socket-make-stream (socket-accept s)
+				  :output t
+				  :input t
+				  :element-type 
+				  :default ; bivalent stream for binary and text
 					;'character
 					;'(unsigned-byte 8)
-				 
 					;:buffering :none
-				 )))
-    (let ((r (read-get-request sm)))
-      (format t "read request for: '~a'~%" r) 
-      ;; 200 means Ok: request fullfilled, document follows
-      (when-bind* ((slash (position #\/ r)))
-		  (cond ((string= "/" r) 
-			 (format sm "HTTP/1.1 200 OK~%Content-type: text/html~%~%")
-			  (format sm "<html><body bgcolor=\"#9791c0\"><img src=\"map.png\">")
-			 (format sm "<p><b>~a</b></p>" (get-internal-real-time))
-			 (format sm "</body></html>")) 
-			((string= r "/chat?satz=")
-			 (format sm "HTTP/1.1 200 OK~%Content-type: text/html~%~%")
-			 (format sm "nothing written")
-			 )
-			((string= "/map.png" r)
-			  (format sm "HTTP/1.1 200 OK~%Content-type: image/png~%~%")
-			)
-			 (t (format sm "error"))))
-      (force-output sm)
-      (close sm))))
+				  )))
+      (let ((r (read-get-request sm)))
+	(format t "read request for: '~a'~%" r) 
+	;; 200 means Ok: request fullfilled, document follows
+	(when-bind* ((slash (position #\/ r)))
+	  (cond ((or (string= "/" r) (string= "/index.html" r))
+					;  (get-internal-real-time)
+		 (write-sequence index sm))
+		((string= "/jquery.js" r)
+		 (write-sequence jquery sm))
+		(t (format sm "error"))))
+	(force-output sm)
+	(close sm)))))
 
 #+nil
 (progn
@@ -118,5 +124,3 @@ a double quote, etc."
   (loop
      (handle-connection s))
   (socket-close s))
-
- 
