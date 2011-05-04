@@ -69,26 +69,17 @@ all bindings are non-nil."
 (defun string-decode-url (string)
   "Return string where URL is unquoted, that is %22 is substituted by
 a double quote, etc."
-  (setf string (string-substitute string "%20" " "))
-  (setf string (string-substitute string "+" " "))
-  (setf string (string-substitute string "%2B" "+"))
-  (setf string (string-substitute string "%22" "\""))
-  (setf string (string-substitute string "%23" "#"))
-  (setf string (string-substitute string "%25" "%"))
-  (setf string (string-substitute string "%26" "&"))
-  (setf string (string-substitute string "%27" "'"))
-  (setf string (string-substitute string "%28" "("))
-  (setf string (string-substitute string "%29" ")"))
-  (setf string (string-substitute string "%2A" "*"))
-  (setf string (string-substitute string "%2C" ","))
-  (setf string (string-substitute string "%2F" "/"))
-  (setf string (string-substitute string "%3A" ":"))
-  (setf string (string-substitute string "%3D" "="))
-  (setf string (string-substitute string "%3E" ">"))
-  (setf string (string-substitute string "%3F" "?"))
-  (setf string (string-substitute string "%5B" "["))
-  (setf string (string-substitute string "%5C" "\\"))
-  (setf string (string-substitute string "%5D" "]")))
+  (macrolet ((q ()
+	       (let ((conv '(("%20" " ") ("+" " ")   ("%2B" "+") ("%22" "\"")
+			     ("%23" "#") ("%25" "%") ("%26" "&") ("%27" "'")
+			     ("%28" "(") ("%29" ")") ("%2A" "*") ("%2C" ",")
+			     ("%2F" "/") ("%3A" ":") ("%3D" "=") ("%3E" ">")
+			     ("%3F" "?") ("%5B" "[") ("%5C" "\\") ("%5D" "]"))))
+		 `(progn
+		    ,@(loop for (a b) in conv collect
+			   `(setf string (string-substitute string ,a ,b)))))))
+    (q)))
+
 
 (defun handle-connection (s)
   (let ((sm (socket-make-stream (socket-accept s)
@@ -109,19 +100,19 @@ a double quote, etc."
 			 (format sm "HTTP/1.1 200 OK~%Content-type: text/html~%~%")
 			  (format sm "<html><body bgcolor=\"#9791c0\"><img src=\"map.png\">")
 			 (format sm "<p><b>~a</b></p>" (get-internal-real-time))
-			 (format sm "<p>map data from open street map</p></body></html>")) 
+			 (format sm "</body></html>")) 
 			((string= r "/chat?satz=")
 			 (format sm "HTTP/1.1 200 OK~%Content-type: text/html~%~%")
 			 (format sm "nothing written")
 			 )
 			((string= "/map.png" r)
-			  (format sm "HTTP/1.1 200 OK~%Caontent-type: image/png~%~%")
+			  (format sm "HTTP/1.1 200 OK~%Content-type: image/png~%~%")
 			)
 			 (t (format sm "error"))))
       (force-output sm)
       (close sm))))
 
-#+mo;
+#+nil
 (progn
   (defvar s (init-serv))
   (loop
