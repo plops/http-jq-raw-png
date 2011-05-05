@@ -126,13 +126,14 @@ a double quote, etc."
 	(format t "read request for: '~a'~%" r) 
 	;; 200 means Ok: request fullfilled, document follows
 	(when-bind* ((slash (position #\/ r)))
-	  (cond ((string= "/ajax.html" r)
+	  (cond ((string= "/ajax.json" r)
 		 (write-sequence (get-answer
 				  (string->ub8
 				   (format nil 
-					   "~a" (random 12)
-					   ;(get-internal-real-time)
-					   )))
+					   "{\"x\":~a,\"y\":~a,\"time\":~a}" (random 200)
+					   (random 200) (get-internal-real-time)
+					   ))
+				  "application/json")
 				 sm))
 		((or (string= "/" r) (string= "/index.html" r))
 		 (write-sequence index sm))

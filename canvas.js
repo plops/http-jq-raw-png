@@ -11,7 +11,6 @@ $(document).ready(function(){
     $("#can").mouseup(function(){draw=false;});
     $("#can").mousemove(function(e){
 	if(draw==true){
-	    //ctx.lineWidth=4;
 	    ctx.lineCap="round";
 	    ctx.beginPath();
 	    var x=e.offsetX, y=e.offsetY;
@@ -22,10 +21,14 @@ $(document).ready(function(){
 	});
     
     (function loopsiloopsiloo(){
-	$.get('http://localhost:8080/ajax.html', function(data) {
-	    ctx.lineWidth=data;
+	$.getJSON('http://localhost:8080/ajax.json', function(json) {
+	    ctx.clear();
+	    ctx.beginPath();
+	    ctx.moveTo(0,0);
+	    ctx.lineTo(json.x,json.y);
+	    ctx.stroke();
 	});
-	setInterval(loopsiloopsiloo,1000);
+	setInterval(loopsiloopsiloo,10000);
     })()
     
 });
