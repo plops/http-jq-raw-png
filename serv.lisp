@@ -127,12 +127,12 @@ a double quote, etc."
 	;; 200 means Ok: request fullfilled, document follows
 	(when-bind* ((slash (position #\/ r)))
 	  (cond ((string= "/ajax.html" r)
-		 
 		 (write-sequence (get-answer
 				  (string->ub8
 				   (format nil 
-					   "<html><body>~a</body></html>" 
-					   (get-internal-real-time))))
+					   "~a" (random 12)
+					   ;(get-internal-real-time)
+					   )))
 				 sm))
 		((or (string= "/" r) (string= "/index.html" r))
 		 (write-sequence index sm))
