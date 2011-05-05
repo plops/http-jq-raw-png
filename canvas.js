@@ -5,7 +5,7 @@ $(document).ready(function(){
     ctx.strokeStyle='red';
     ctx.fillStyle = "rgba(0, 0, 200, 0.5)";
     ctx.fillRect (30, 30, 55, 50);
-    ctx.lineWidth=4;
+    ctx.lineWidth=1;
 
     $("#can").mousedown(function(){draw=true;});
     $("#can").mouseup(function(){draw=false;});
@@ -20,15 +20,16 @@ $(document).ready(function(){
 	}
 	});
     
-    (function loopsiloopsiloo(){
-	$.getJSON('http://localhost:8080/ajax.json', function(json) {
-	    ctx.clear();
-	    ctx.beginPath();
-	    ctx.moveTo(0,0);
-	    ctx.lineTo(json.x,json.y);
-	    ctx.stroke();
-	});
-	setInterval(loopsiloopsiloo,10000);
-    })()
+    setInterval(
+	function(){
+	    $.getJSON('http://localhost:8080/ajax.json',
+		      function(json) {
+			  ctx.clearRect(0, 0, canvas.width, canvas.height);
+			  ctx.beginPath();
+			  ctx.moveTo(0,0);
+			  ctx.lineTo(json.x,json.y);
+			  ctx.stroke();
+		      })},
+	100);
     
 });
