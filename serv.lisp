@@ -158,6 +158,8 @@ a double quote, etc."
 ;; rfc2083 PNG, rfc1951 deflate could be an alternative
 ;; it looks like i don't have to compress/modify data for png at all
 ;; i just have to write the right header
+;; http://drj11.wordpress.com/2007/11/20/a-use-for-uncompressed-pngs/
+;; http://gareth-rees.livejournal.com/9988.html Smallest possible transparent PNG
 
 ;; ideas for zooming into image
 ;; http://deepliquid.com/projects/Jcrop/demos.php
