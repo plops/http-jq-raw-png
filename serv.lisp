@@ -110,7 +110,10 @@ a double quote, etc."
        (canvas (get-answer (read-file "canvas.js")
 			    "text/javascript"))
        (favicon (get-answer (read-file "favicon.ico")
-			    "image/vnd.microsoft.icon")))
+			    "image/vnd.microsoft.icon"))
+       (im-h 100)
+       (im-w 100)
+       (image (make-array (list im-h im-w) :element-type '(unsigned-byte 8))))
   (defparameter *q* (list canvas jquery index))
   (defun handle-connection (s)
     (let ((sm (socket-make-stream (socket-accept s)
@@ -126,7 +129,15 @@ a double quote, etc."
 	(format t "read request for: '~a'~%" r) 
 	;; 200 means Ok: request fullfilled, document follows
 	(when-bind* ((slash (position #\/ r)))
-	  (cond ((string= "/ajax.json" r)
+	  (cond ((string= "/test.pgm" r)
+		 (write-sequence (get-answer
+				  (string->ub8
+				   (format nil 
+					   "P5~%~d ~d~%255~%" im-h im-w))
+				  "image/x-portable-graymap")
+				 sm)
+		 (write-sequence (sb-ext:array-storage-vector image) sm))
+		((string= "/ajax.json" r)
 		 (write-sequence (get-answer
 				  (string->ub8
 				   (format nil 
@@ -143,7 +154,14 @@ a double quote, etc."
 		(t (format sm "error"))))
 	(force-output sm)
 	(close sm)))))
+;; unfortunately browsers don't display pgm files
+;; rfc2083 PNG, rfc1951 deflate could be an alternative
+;; it looks like i don't have to compress/modify data for png at all
+;; i just have to write the right header
 
+;; ideas for zooming into image
+;; http://deepliquid.com/projects/Jcrop/demos.php
+;; http://www.mind-projects.it/projects/jqzoom/demos.php#demo5
 #+nil
 (progn
   (defvar *keep-running* t)

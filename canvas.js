@@ -20,16 +20,15 @@ $(document).ready(function(){
 	}
 	});
     
-    setInterval(
-	function(){
-	    $.getJSON('http://localhost:8080/ajax.json',
-		      function(json) {
-			  ctx.clearRect(0, 0, canvas.width, canvas.height);
-			  ctx.beginPath();
-			  ctx.moveTo(0,0);
-			  ctx.lineTo(json.x,json.y);
-			  ctx.stroke();
-		      })},
-	100);
-    
+    // setInterval(
+    // 	function(){
+    // 	    $.getJSON('http://localhost:8080/ajax.json',
+    // 		      function(json) {
+    // 			  ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // 			  ctx.beginPath();
+    // 			  ctx.moveTo(0,0);
+    // 			  ctx.lineTo(json.x,json.y);
+    // 			  ctx.stroke();
+    // 		      })},
+    // 	100);
 });
