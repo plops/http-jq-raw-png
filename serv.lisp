@@ -36,8 +36,8 @@
       ,@body)))
 
 (defmacro when-bind* (bindings &body body)
-  "Recursively apply WHEN-BIND to each binding in BINDINGS. Evaluate BODY when 
-all bindings are non-nil."
+  "Recursively apply WHEN-BIND to each binding in BINDINGS. Evaluate
+BODY when all bindings are non-nil."
   (if (null (cdr bindings))
       `(when-bind ,(car bindings)
         ,@body)
@@ -81,20 +81,37 @@ a double quote, etc."
     (q)))
 
 (defun read-file (fn)
- (with-open-file (s fn :direction :input)
-   (let ((buf (make-string (file-length s))))
+ (with-open-file (s fn :direction :input :element-type '(unsigned-byte 8))
+   (let ((buf (make-array (file-length s) :element-type '(unsigned-byte 8))))
      (read-sequence buf s)
      buf)))
 
+(defun string->ub8 (s)
+  (let* ((n (length s))
+	 (r (make-array n :element-type '(unsigned-byte 8))))
+    (dotimes (i n)
+      (setf (aref r i) (char-code (char s i))))
+    r))
+
+#+nil
+(string->ub8 "ess")
+
+
 (defun get-answer (str &optional (type "text/html"))
-  (concatenate 'string "HTTP/1.1 200 OK~%Content-type: "
-	       type
-	       "~%~%"
+  (concatenate '(simple-array (unsigned-byte 8) 1)
+	       (string->ub8 (format nil "HTTP/1.1 200 OK~%Content-type: ~a~%~%"
+				    type))
 	       str))
+
 
 (let* ((index (get-answer (read-file "index.html")))
        (jquery (get-answer (read-file "jquery.js")
-			    "application/x-javascript")))
+			    "text/javascript"))
+       (canvas (get-answer (read-file "canvas.js")
+			    "text/javascript"))
+       (favicon (get-answer (read-file "favicon.ico")
+			    "image/vnd.microsoft.icon")))
+  (defparameter *q* (list canvas jquery index))
   (defun handle-connection (s)
     (let ((sm (socket-make-stream (socket-accept s)
 				  :output t
@@ -109,18 +126,31 @@ a double quote, etc."
 	(format t "read request for: '~a'~%" r) 
 	;; 200 means Ok: request fullfilled, document follows
 	(when-bind* ((slash (position #\/ r)))
-	  (cond ((or (string= "/" r) (string= "/index.html" r))
-					;  (get-internal-real-time)
+	  (cond ((string= "/ajax.html" r)
+		 
+		 (write-sequence (get-answer
+				  (string->ub8
+				   (format nil 
+					   "<html><body>~a</body></html>" 
+					   (get-internal-real-time))))
+				 sm))
+		((or (string= "/" r) (string= "/index.html" r))
 		 (write-sequence index sm))
-		((string= "/jquery.js" r)
-		 (write-sequence jquery sm))
+		((string= "/jquery.js" r) (write-sequence jquery sm))
+		((string= "/canvas.js" r) (write-sequence canvas sm))
+		((string= "/favicon.ico" r) (write-sequence favicon sm))
 		(t (format sm "error"))))
 	(force-output sm)
 	(close sm)))))
 
 #+nil
 (progn
-  (defvar s (init-serv))
-  (loop
-     (handle-connection s))
-  (socket-close s))
+  (defvar *keep-running* t)
+  (sb-thread:make-thread (lambda ()
+			   (defvar s (init-serv))
+			   (loop while *keep-running* do
+			      (handle-connection s))
+			   (socket-close s))
+			 :name "server"))
+#+nil
+(defvar *keep-running* nil)

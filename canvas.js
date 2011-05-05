@@ -19,11 +19,8 @@ $(document).ready(function(){
 	    ctx.stroke();
 	}
 	});
-    $("#eraser").click(function(){
-	ctx.strokeStyle='#fff';
-    });
     
-    $.get('http://localhost:8080/ajax/test.html', function(data) {
+    $.get('http://localhost:8080/ajax.html', function(data) {
 	$('.result').html(data);
 	alert('Load was performed.');
     });
