@@ -45,23 +45,80 @@
 ;; IEND 73 69 78 68 marks end of image
 
 (defun list->array (ls)
+  (declare (values (simple-array (unsigned-byte 8) 1) &optional))
   (make-array (length ls) :element-type '(unsigned-byte 8)
-      :initial-contents ls))
+	      :initial-contents ls))
 
+(defun ub32->ub8 (b)
+  (loop for i below 4 collect
+       (ldb (byte 8 (* 8 i)) b)))
+(defun ub16->ub8 (b)
+  (loop for i below 2 collect
+       (ldb (byte 8 (* 8 i)) b)))
+
+#+nil
+(ub4->ub1 #xff010203)
 
 (defun ihdr (width height &optional (bit-depth 8) (color-type 0)
 	     (compression-method 0) (filter-method 0) (interlace-method 0))
-  (declare (type (unsigned-byte 4) width height)
-	   (type (unsigned-byte 1) bit-depth color-type compression-method
+  (declare (type (unsigned-byte 32) width height)
+	   (type (unsigned-byte 8) bit-depth color-type compression-method
 		 filter-method interlace-method)
 	   (values (simple-array (unsigned-byte 8) 1) &optional))
   (let* ((data (list width height bit-depth color-type compression-method filter-method
 		     interlace-method)))
-    (list->array (append (list (length data) 73 72 68 82)
-			 data (crc (list->array data))))))
+    (list->array (append (ub16->ub8 (length data))
+			 (list 73 72 68 82)
+			 data 
+			 (ub32->ub8 (crc (list->array data)))))))
 
-(let* ((signature (list->array '(137 80 78 71 13 10 26 10))))
-  )
+(defun idat (zlib-data)
+  (declare (type (simple-array (unsigned-byte 8) 1) zlib-data)
+	   (values (simple-array (unsigned-byte 8) 1) &optional))
+  (concatenate '(simple-array (unsigned-byte 8) 1)
+	       (list->array (append (ub16->ub8 (length zlib-data))
+				    (list 73 68 65 84)))
+	       zlib-data
+	       (list->array (ub32->ub8 (crc zlib-data)))))
+
+(defun zlib (deflate-data)
+  (declare (type (simple-array (unsigned-byte 8) 1) deflate-data)
+	   (values (simple-array (unsigned-byte 8) 1) &optional))
+  (concatenate '(simple-array (unsigned-byte 8) 1)
+	       (list->array (list #x78 #x9c))
+	       deflate-data
+	       (list->array (ub32->ub8 (adler deflate-data)))))
+
+(defun deflate (image-data)
+  (concatenate '(simple-array (unsigned-byte 8) 1)
+	       (list->array (append (list #b10000000)
+				    (ub16->ub8 (length image-data))
+				    (ub16->ub8 (- (length image-data)))))
+	       image-data))
+
+(defun iend ()
+  (list->array (list 73 69 78 68)))
+
+(defun write-png (fn image-data)
+  (declare (type (simple-array (unsigned-byte 8) 2) image-data))
+  (with-open-file (s fn :direction :output
+		     :if-exists :supersede
+		     :if-does-not-exist :create
+		     :element-type '(unsigned-byte 8))
+   (destructuring-bind (h w) (array-dimensions image-data)
+     (write-sequence 
+      (concatenate '(simple-array (unsigned-byte 8) 1)
+		   (list->array '(137 80 78 71 13 10 26 10)) ;; signature
+		   (ihdr w h)
+		   (idat (zlib (deflate (sb-ext:array-storage-vector image-data))))
+		   (iend))
+      s))
+   nil))
+
+(let* ((h 100)
+       (w 100)
+       (data (make-array (list h w) :element-type '(unsigned-byte 8))))
+  (write-png "/dev/shm/o.png" data))
 
 (let ((crc-table 
        (make-array 
