@@ -111,9 +111,9 @@ a double quote, etc."
 			    "text/javascript"))
        (favicon (get-answer (read-file "favicon.ico")
 			    "image/vnd.microsoft.icon"))
-       (im-h 100)
-       (im-w 100)
-       (image (make-array (list im-h im-w) :element-type '(unsigned-byte 8))))
+       (im-h 16)
+       (im-w 16)
+       (image (make-array (list im-h im-w 3) :element-type '(unsigned-byte 8))))
   (defparameter *q* (list canvas jquery index))
   (defun handle-connection (s)
     (let ((sm (socket-make-stream (socket-accept s)
@@ -129,12 +129,17 @@ a double quote, etc."
 	(format t "read request for: '~a'~%" r) 
 	;; 200 means Ok: request fullfilled, document follows
 	(when-bind* ((slash (position #\/ r)))
-	  (cond ((string= "/test.pgm" r)
+	  (cond ((string= "/test.ppm" r)
+		 (dotimes (j im-h)
+		   (dotimes (i im-w)
+		     (setf (aref image j i 0) (mod (+ i j) 255))))
 		 (write-sequence (get-answer
 				  (string->ub8
 				   (format nil 
-					   "P5~%~d ~d~%255~%" im-h im-w))
-				  "image/x-portable-graymap")
+					   "P6~%~d ~d~%255~%" im-h im-w))
+				  "image/x-portable-pixmap"
+				  ;"image/ppm"
+				  )
 				 sm)
 		 (write-sequence (sb-ext:array-storage-vector image) sm))
 		((string= "/ajax.json" r)
@@ -174,4 +179,4 @@ a double quote, etc."
 			   (socket-close s))
 			 :name "server"))
 #+nil
-(defvar *keep-running* nil)
+(setf *keep-running* nil)
