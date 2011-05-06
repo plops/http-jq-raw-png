@@ -1,7 +1,4 @@
-(let* ((sig '(137 80 78 71 13 10 26 10))
-       (signature (make-array (length sig) :element-type '(unsigned-byte 8)
-			   :initial-contents sig)))
-  header)
+
 ;; http://en.wikipedia.org/wiki/PNG_file_format
 ;; http://garethrees.org/2007/11/14/pngcrush/
 ;; http://www.ietf.org/rfc/rfc1951.txt
@@ -46,6 +43,25 @@
 ;; LEN2,NLEN2, LEN*byte data
 
 ;; IEND 73 69 78 68 marks end of image
+
+(defun list->array (ls)
+  (make-array (length ls) :element-type '(unsigned-byte 8)
+      :initial-contents ls))
+
+
+(defun ihdr (width height &optional (bit-depth 8) (color-type 0)
+	     (compression-method 0) (filter-method 0) (interlace-method 0))
+  (declare (type (unsigned-byte 4) width height)
+	   (type (unsigned-byte 1) bit-depth color-type compression-method
+		 filter-method interlace-method)
+	   (values (simple-array (unsigned-byte 8) 1) &optional))
+  (let* ((data (list width height bit-depth color-type compression-method filter-method
+		     interlace-method)))
+    (list->array (append (list (length data) 73 72 68 82)
+			 data (crc (list->array data))))))
+
+(let* ((signature (list->array '(137 80 78 71 13 10 26 10))))
+  )
 
 (let ((crc-table 
        (make-array 
