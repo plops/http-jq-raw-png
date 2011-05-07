@@ -1,5 +1,4 @@
-
-
+(in-package :png)
 (let ((crc-table 
        (make-array 
 	256 :element-type '(unsigned-byte 32)
@@ -196,14 +195,20 @@
 		 result
 		 (list->array (ub32->ub8 (adler buf))))))
 
-
-
 (defun iend ()
   (let ((signature (list 73 69 78 68)))
     (list->array (append (ub32->ub8 0) 
 			 signature 
 			 (ub32->ub8 (crc (list->array signature)))))))
 
+(defun png (image-data)
+  (declare (type (simple-array (unsigned-byte 8) 2) image-data))
+  (destructuring-bind (h w) (array-dimensions image-data)
+    (concatenate '(simple-array (unsigned-byte 8) 1)
+		 (list->array '(137 80 78 71 13 10 26 10)) ;; signature
+		 (ihdr (- w 1) h)
+		 (idat (zlib (sb-ext:array-storage-vector image-data)))
+		 (iend))))
 
 (defun write-png (fn image-data)
   (declare (type (simple-array (unsigned-byte 8) 2) image-data))
@@ -211,15 +216,7 @@
 		     :if-exists :supersede
 		     :if-does-not-exist :create
 		     :element-type '(unsigned-byte 8))
-   (destructuring-bind (h w) (array-dimensions image-data)
-     (write-sequence 
-      (concatenate '(simple-array (unsigned-byte 8) 1)
-		   (list->array '(137 80 78 71 13 10 26 10)) ;; signature
-		   (ihdr (- w 1) h)
-		   (idat (zlib
-			  (sb-ext:array-storage-vector image-data)))
-		   (iend))
-      s))
+   (write-sequence (png image-data) s)
    nil))
 
 #+nil
@@ -234,63 +231,3 @@
       (setf (aref data j (+ 1 i)) (mod i (min 255 w)))))
   (write-png "/dev/shm/o.png" data))
 
-(defun fast-pgm (image-data)
-  "Fastest way I could think of to convert an image into an
-uncompressed PNG picture."
-  (declare (type (simple-array (unsigned-byte 8) 2) image-data))
-  (destructuring-bind (h w) (array-dimensions image-data)
-    (let* ((deflate-block-size 2048)
-	   (samples-and-filter-bytes 
-	    (* (1+ w) ;; each scan line preceded by zero byte for
-	       ;; filter selection
-	       h))
-	   (deflate-blocks (ceiling samples-and-filter-bytes
-				    deflate-block-size))
-	   (deflate-bytes 
-	    (+ (* 5 deflate-blocks) ;; last8 len16 nlen16 heads every
-	       ;; deflate block
-	       samples-and-filter-bytes))
-	   (zlib-bytes (+ 2 ;; CMF8 FLG8
-			  deflate-bytes
-			  4 ;; adler
-			  ))
-	   (idat-bytes (+ 4 ;; len
-			  4 ;; signature
-			  zlib-bytes 
-			  4 ;; crc over signature and zlib
-			  ))
-	   (iend-bytes (+ 4 ;; len
-			  4 ;; signature
-			  4 ;; crc of signature
-			  ))
-	   (ihdr-bytes (+ 4 ;; len
-			  4 ;; signature
-			  4 ;; width
-			  4 ;; height
-			  5 ;; bit-depth color-type
-			  ;; compression-method filter-method
-			  ;; interlace-method
-			  4 ;; crc
-			  ))
-	   (png-head-bytes 8 ;; signature
-	     )
-	   (res (make-array (+ png-head-bytes
-			       ihdr-bytes
-			       idat-bytes
-			       iend-bytes)
-			    :element-type '(unsigned-byte 8))))
-      (blah
-	(r '(137 80 78 71 13 10 26 10)) ;; png-head
-	(r '(25 0)) ;; ihdr
-	)
-      res)))
-
-#+nil
-(length (let* ((h 32)
-	(w 32)
-	(data (make-array (list h w) 
-			  :element-type '(unsigned-byte 8))))
-   (dotimes (j h)
-     (dotimes (i w)
-       (setf (aref data j i) (mod i (min 255 w)))))
-   (fast-pgm data)))
