@@ -94,6 +94,7 @@
 ;; compression-method-and-flags=#b0111 1000=#x78, flags= #x9c ,
 ;; CM=8 bits 0 to 3
 ;; CINFO=base-2 log of lz77 window size - 8 
+;; 2^(CINFO+8) is window size, e.g. CINFO=3 -> 2048, CINFO=7 -> 32768
 ;; CMF*256+FLG must be multiple of 31
 #+nil ;; FLG & #b11111 =
 (mod (* 257 #x78) 31)
@@ -153,30 +154,53 @@
 (defun idat (zlib-data)
   (declare (type (simple-array (unsigned-byte 8) 1) zlib-data)
 	   (values (simple-array (unsigned-byte 8) 1) &optional))
-  (let ((signature (list 73 68 65 84)))
-   (concatenate '(simple-array (unsigned-byte 8) 1)
-		(list->array (append (ub32->ub8 (length zlib-data))
-				     signature))
-		zlib-data
-		(list->array (ub32->ub8 (crc (concatenate '(simple-array (unsigned-byte 8) 1) 
-							  (list->array signature)
-							  zlib-data)))))))
+  (let* ((signature (list 73 68 65 84))
+	 (dat (concatenate '(simple-array (unsigned-byte 8) 1) 
+			   (list->array signature)
+			   zlib-data)))
+    (concatenate '(simple-array (unsigned-byte 8) 1)
+		 (list->array (ub32->ub8 (length zlib-data)))
+		 dat
+		 (list->array (ub32->ub8 (crc dat))))))
 
-(defun zlib (deflate-data)
-  (declare (type (simple-array (unsigned-byte 8) 1) deflate-data)
+
+
+(defun deflate (buf &optional (is-last-p nil))
+  (concatenate '(simple-array (unsigned-byte 8) 1)
+	       (list->array (append (list (if is-last-p #x80 0))
+				    (ub16->ub8 (length buf))
+				    (ub16->ub8 (- (length buf)))))
+	       buf))
+
+
+(defun zlib (buf)
+  (declare (type (simple-array (unsigned-byte 8) 1) buf)
 	   (values (simple-array (unsigned-byte 8) 1) &optional))
-  (concatenate '(simple-array (unsigned-byte 8) 1)
-	       (let ((cmf 8))
-		(list->array (list cmf (mod (- 31 (mod (ash cmf 8) 31)) 31))))
-	       deflate-data
-	       (list->array (ub32->ub8 (adler deflate-data)))))
+  (let* ((blocksize 2048)
+	(cmf #x38) ;78
+	(nblocks (ceiling (length buf)
+			  blocksize))
+	(result (make-array (+ 2 (* 5 nblocks) (length buf))
+			    :element-type '(unsigned-byte 8)))
+	 (result-i 0))
+    (setf (aref result 0) cmf
+	  (aref result 1) (mod (- 31 (mod (ash cmf 8) 31)) 31)
+	  result-i 1)
+    (dotimes (b nblocks)
+      (let* ((pos (* b blocksize))
+	     (a (deflate 
+		    (subseq buf pos (min (length buf) 
+					 (+ pos blocksize)))
+		    (= b (1- nblocks)))))
+	(format t "~a~%" (list 'block b 'is-last-p (= b (1- nblocks))))
+	(dotimes (k (length a))
+	  (setf (aref result (incf result-i))
+		(aref a k)))))
+    (concatenate '(simple-array (unsigned-byte 8) 1)
+		 result
+		 (list->array (ub32->ub8 (adler buf))))))
 
-(defun deflate (image-data)
-  (concatenate '(simple-array (unsigned-byte 8) 1)
-	       (list->array (append (list #b10000000)
-				    (ub16->ub8 (length image-data))
-				    (ub16->ub8 (- (length image-data)))))
-	       image-data))
+
 
 (defun iend ()
   (let ((signature (list 73 69 78 68)))
@@ -195,8 +219,8 @@
       (concatenate '(simple-array (unsigned-byte 8) 1)
 		   (list->array '(137 80 78 71 13 10 26 10)) ;; signature
 		   (ihdr w h)
-		   (idat (zlib (deflate 
-				   (sb-ext:array-storage-vector image-data))))
+		   (idat (zlib
+			  (sb-ext:array-storage-vector image-data)))
 		   (iend))
       s))
    nil))
@@ -204,5 +228,6 @@
 
 (let* ((h 32)
        (w 32)
-       (data (make-array (list h w) :element-type '(unsigned-byte 8))))
+       (data (make-array (list h w)
+			 :element-type '(unsigned-byte 8))))
   (write-png "/dev/shm/o.png" data))
