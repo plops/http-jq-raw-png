@@ -199,7 +199,8 @@
 			 (ub32->ub8 (crc (list->array signature)))))))
 
 (defun png (image-data)
-  (declare (type (simple-array (unsigned-byte 8) 2) image-data))
+  (declare (type (simple-array (unsigned-byte 8) 2) image-data)
+	   (values (simple-array (unsigned-byte 8) 1) &optional))
   (destructuring-bind (h w) (array-dimensions image-data)
     (concatenate '(simple-array (unsigned-byte 8) 1)
 		 (list->array '(137 80 78 71 13 10 26 10)) ;; signature
