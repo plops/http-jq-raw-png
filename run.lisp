@@ -12,8 +12,9 @@
        (favicon (get-answer (read-file "favicon.ico")
 			    "image/vnd.microsoft.icon"))
        (im-h 200)
-       (im-w 310)
-       (image (make-array (list im-h im-w) :element-type '(unsigned-byte 8))))
+       (im-w 100)
+       (image (make-array (list im-h im-w) :element-type '(unsigned-byte 8)
+			  :initial-element 255)))
   (defparameter *q* (list canvas jquery index))
   (defun handle-connection (s)
     (let ((sm (socket-make-stream (socket-accept s)
@@ -29,10 +30,22 @@
 	(format t "read request for: '~a'~%" r) 
 	;; 200 means Ok: request fullfilled, document follows
 	(when-bind* ((slash (position #\/ r)))
-	  (cond ((string= "/test.png" r)
-		 (dotimes (j im-h)
-		   (dotimes (i im-w)
-		     (setf (aref image j i) (mod i 255))))
+	  (cond ((let ((cmp (string<= "/test.png" r)))
+		   (and cmp
+			(= 9 cmp)))
+		 (let ((r (expt (random 23) 2))
+		       (x0 (floor (- (random im-w)
+				 (floor im-w 2))
+			      2))
+		       (y0 (floor (- (random im-h) (floor im-h 2))
+				  2)))
+		   (dotimes (j im-h)
+		     (dotimes (i im-w)
+		       (let* ((x (- i (floor im-w 2) x0))
+			      (y (- j (floor im-h 2) y0))
+			      (r2 (+ (* x x) (* y y))))
+			 (when (< r2 r)
+			  (setf (aref image j i) (mod r 255)))))))
 		 (write-sequence (get-answer (png image)
 					     "image/png")
 				 sm))
@@ -53,6 +66,7 @@
 		(t (format sm "error"))))
 	(force-output sm)
 	(close sm)))))
+
 
 ;; ideas for zooming into image
 ;; http://deepliquid.com/projects/Jcrop/demos.php

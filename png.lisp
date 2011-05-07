@@ -202,11 +202,17 @@
   (declare (type (simple-array (unsigned-byte 8) 2) image-data)
 	   (values (simple-array (unsigned-byte 8) 1) &optional))
   (destructuring-bind (h w) (array-dimensions image-data)
-    (concatenate '(simple-array (unsigned-byte 8) 1)
-		 (list->array '(137 80 78 71 13 10 26 10)) ;; signature
-		 (ihdr (- w 1) h)
-		 (idat (zlib (sb-ext:array-storage-vector image-data)))
-		 (iend))))
+    (let ((filter-image (make-array (list h (1+ w)) :element-type '(unsigned-byte 8))))
+      ;; precede each scan line with a zero
+      (dotimes (j h)
+	(setf (aref filter-image j 0) 0)
+	(dotimes (i w)
+	  (setf (aref filter-image j (1+ i)) (aref image-data j i))))
+     (concatenate '(simple-array (unsigned-byte 8) 1)
+		  (list->array '(137 80 78 71 13 10 26 10)) ;; signature
+		  (ihdr w h)
+		  (idat (zlib (sb-ext:array-storage-vector filter-image)))
+		  (iend)))))
 
 (defun write-png (fn image-data)
   (declare (type (simple-array (unsigned-byte 8) 2) image-data))
