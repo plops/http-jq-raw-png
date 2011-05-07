@@ -167,12 +167,16 @@
 
 (defun deflate (buf &optional (is-last-p nil))
   (concatenate '(simple-array (unsigned-byte 8) 1)
-	       (list->array (append (list (if is-last-p #x80 0))
-				    (ub16->ub8 (length buf))
-				    (ub16->ub8 (- (length buf)))))
+	       (list->array (append (list (if is-last-p 1 0))
+				    (ub16->ub8 #x2004 #+nil(length buf))
+				    (ub16->ub8 #xdffb #+nil (+ (- (length buf)) 
+						  -1))))
 	       buf))
 
-
+(+ #x2004)
+(- #xdffb (ash 1 16) -1)
+(+ #x0400)
+(- (- #xfc00 1) (ash 1 16) -1)
 (defun zlib (buf)
   (declare (type (simple-array (unsigned-byte 8) 1) buf)
 	   (values (simple-array (unsigned-byte 8) 1) &optional))
@@ -218,7 +222,7 @@
      (write-sequence 
       (concatenate '(simple-array (unsigned-byte 8) 1)
 		   (list->array '(137 80 78 71 13 10 26 10)) ;; signature
-		   (ihdr w h)
+		   (ihdr w (- h 1))
 		   (idat (zlib
 			  (sb-ext:array-storage-vector image-data)))
 		   (iend))
@@ -228,6 +232,6 @@
 
 (let* ((h 32)
        (w 32)
-       (data (make-array (list h w)
+       (data (make-array (list (+ 1 h) w)
 			 :element-type '(unsigned-byte 8))))
   (write-png "/dev/shm/o.png" data))
