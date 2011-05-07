@@ -168,24 +168,20 @@
 (defun deflate (buf &optional (is-last-p nil))
   (concatenate '(simple-array (unsigned-byte 8) 1)
 	       (list->array (append (list (if is-last-p 1 0))
-				    (ub16->ub8 #x2004 #+nil(length buf))
-				    (ub16->ub8 #xdffb #+nil (+ (- (length buf)) 
-						  -1))))
+				    (reverse (ub16->ub8 (length buf)))
+				    (reverse (ub16->ub8 (+ (- (length buf)) 
+							   -1)))))
 	       buf))
 
-(+ #x2004)
-(- #xdffb (ash 1 16) -1)
-(+ #x0400)
-(- (- #xfc00 1) (ash 1 16) -1)
 (defun zlib (buf)
   (declare (type (simple-array (unsigned-byte 8) 1) buf)
 	   (values (simple-array (unsigned-byte 8) 1) &optional))
   (let* ((blocksize 2048)
-	(cmf #x38) ;78
-	(nblocks (ceiling (length buf)
-			  blocksize))
-	(result (make-array (+ 2 (* 5 nblocks) (length buf))
-			    :element-type '(unsigned-byte 8)))
+	 (cmf #x38) ;78
+	 (nblocks (ceiling (length buf)
+			   blocksize))
+	 (result (make-array (+ 2 (* 5 nblocks) (length buf))
+			     :element-type '(unsigned-byte 8)))
 	 (result-i 0))
     (setf (aref result 0) cmf
 	  (aref result 1) (mod (- 31 (mod (ash cmf 8) 31)) 31)
@@ -196,7 +192,7 @@
 		    (subseq buf pos (min (length buf) 
 					 (+ pos blocksize)))
 		    (= b (1- nblocks)))))
-	(format t "~a~%" (list 'block b 'is-last-p (= b (1- nblocks))))
+	;(format t "~a~%" (list 'block b 'is-last-p (= b (1- nblocks))))
 	(dotimes (k (length a))
 	  (setf (aref result (incf result-i))
 		(aref a k)))))
@@ -222,7 +218,7 @@
      (write-sequence 
       (concatenate '(simple-array (unsigned-byte 8) 1)
 		   (list->array '(137 80 78 71 13 10 26 10)) ;; signature
-		   (ihdr w (- h 1))
+		   (ihdr (- w 1) h)
 		   (idat (zlib
 			  (sb-ext:array-storage-vector image-data)))
 		   (iend))
@@ -230,8 +226,13 @@
    nil))
 
 
-(let* ((h 32)
-       (w 32)
-       (data (make-array (list (+ 1 h) w)
+(let* ((h 322)
+       (w 300)
+       (data (make-array (list h (+ 1 w)) 
 			 :element-type '(unsigned-byte 8))))
+  ;; write 0 infront of every line       4.1.3. IDAT Image data
+  (dotimes (j h)
+    (setf (aref data j 0) 0)
+    (dotimes (i w)
+      (setf (aref data j (+ 1 i)) (mod i (min 255 w)))))
   (write-png "/dev/shm/o.png" data))
