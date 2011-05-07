@@ -143,8 +143,6 @@
 			 data
 			 (ub32->ub8 (crc (list->array (append signature
 							      data))))))))
-#+nil
-(length (ihdr 320 230))
 
 (defun idat (zlib-data)
   (declare (type (simple-array (unsigned-byte 8) 1) zlib-data)
@@ -187,7 +185,6 @@
 		    (subseq buf pos (min (length buf) 
 					 (+ pos blocksize)))
 		    (= b (1- nblocks)))))
-	;(format t "~a~%" (list 'block b 'is-last-p (= b (1- nblocks))))
 	(dotimes (k (length a))
 	  (setf (aref result (incf result-i))
 		(aref a k)))))
