@@ -20,13 +20,13 @@ $(document).ready(function(){
 	}
 	});
     
-    setInterval(
-	function(){
-	    var now = new Date();
-	    if (document.images) {
-		document.images.png.src = 'test.png?q=' + now.getTime();
-	    }
-	},20);
+    // setInterval(
+    // 	function(){
+    // 	    var now = new Date();
+    // 	    if (document.images) {
+    // 		document.images.png.src = 'test.png?q=' + now.getTime();
+    // 	    }
+    // 	},200);
 
     // setInterval(
     // 	function(){
