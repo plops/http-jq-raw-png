@@ -1,0 +1,194 @@
+<form>
+<h3>create a profile</h3>
+first name: <input type="text" name="firstname">
+last name: <input type="text" name="lastname">
+Gender:
+<input type="radio" name="gender" id="gender-male-input">
+        <label for="gender-male-input">male</label>
+<input type="radio" name="gender">female
+</form>
+
+check boxes are not usually exclusive
+as opposed to radio
+
+<head><link rel="stylesheet" href="my-styles.css"></head>
+
+selector property value
+p { color: blue; }
+h1{color:red;font-size:12pt}
+
+4 ways to select
+element p
+class   .help (contain)
+id      #about (should be unique)
+position in doc
+
+<div id="about>
+     <p class="help intro"></p>
+     <p class="help"></p>
+</div>
+
+#about p {}
+p.intro {}
+
+another 5th selector
+
+a:link { }
+a:visited {}
+a:hover {}
+a:active {}
+
+properties: 
+font: 12px normal Verdana, sans-serif
+color: #123 = #112233
+background-color: red;
+border: 1px solid rgb(193,210,192);   this is a shorthand, order is important
+
+border-color:
+border-left:
+border-width:
+
+font-size:
+
+units
+px absolute
+em relative to font-size, generally the height of the font
+% relative to different things in different context
+
+width: 50%; half of available width
+
+last and most specific declaration wins
+
+text related properties inherit from ancestors
+(line-height ... but not margin)
+
+layout
+box model
+content text
+padding on all 4 sides
+border 
+margin
+
+backgrounds inside border, including padding and content
+
+margin: 1em;
+margin: 1em 2em; top,bot =1 r&l=2
+martin: 1em 2em 3em 4em;
+top right bottom left
+
+inline box like words in a text
+a span img input
+
+block need their space and take up own line
+h1 p ul li div
+
+a { display: block; }
+will put anchors one line down
+display: none
+
+position
+
+static
+relative
+absolute
+fixed
+
+
+float
+
+can be confusing
+
+
+CSS2 more interesting selectors
+first child
+
+CSS3 propertie values
+rounded corners without images
+
+http://www.youtube.com/watch?v=hdEn3P3ZbiY&feature=related
+javascript
+
+document.getElementsById('about');
+corresponds to #about {} in css
+
+
+getElementsByTagName('p')[0]
+
+available on every node object
+can be changed 
+
+advanced getters
+getelementsby.com
+or javascript libraries
+
+protototype
+dojo
+yui
+jquery
+motools
+
+.parentNode walks up the dom tree
+.childNodes
+.firstChild
+.lastChild
+
+.previousSibling
+.nextSibling
+
+dom nodes don't exist when javascript in the head
+define a function there
+and call it at the bottom in the body once all html is parsed
+
+most important events:
+click
+mouseover
+mouseout
+mousedown
+mouseup
+blur
+focus
+load
+
+listener function:
+var el=document.getElementById('test');
+// ie this sucks
+el.attachEvent('onclick',function(){...});
+
+// everyone else
+el.addEventListener('click',function(){...},false);
+
+object detection:
+if(el.addEventListener){
+ ...
+}
+// will hopefully work with new browsers as well
+
+this.style.display='none' ; // hides
+
+camelCased
+
+this is the object that owns the functional method
+you can attach a single listener to multiple nodes
+var hide=function(){
+    this.style.display='none';
+}
+el1.addEventListener('click',hide,false);
+el2.addEventListener('click',hide,false);
+
+but this mixes presentation and behaviour
+
+one can change the class names. this is a better approach.
+js:  this.className='inactive';
+css: .inactive { display: none;}
+
+or even multiple class names
+js: this.className='loud special';
+css:
+.loud { font-size: 2em; }
+.special { background-color: #ff0;}
+
+we shouldn't overwrite but use hasClass, addClass, removeClass
+which isn't part of standard javscript
+
+alter default events
+var listener=function(e){ e.preventDefault(); };
